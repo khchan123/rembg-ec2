@@ -1,0 +1,4 @@
+sudo yum update -y
+sudo yum install pip -y
+sudo pip install rembg[cli]
+sudo pip install markupsafe==2.0.1
