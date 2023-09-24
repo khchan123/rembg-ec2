@@ -5,12 +5,12 @@ After=network.target
 
 [Service]
 Type=notify
-User=ssm-user
-Group=ssm-user
+User=ec2-user
+Group=ec2-user
 RuntimeDirectory=gunicorn
 RuntimeDirectoryMode=0775
-WorkingDirectory=/home/ssm-user/app
-ExecStart=/home/ssm-user/app/venv/bin/gunicorn app:app
+WorkingDirectory=/home/ec2-user/app
+ExecStart=/home/ec2-user/app/venv/bin/gunicorn app:app
 ExecReload=/bin/kill -s HUP $MAINPID
 KillMode=mixed
 TimeoutStopSec=5

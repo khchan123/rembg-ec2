@@ -19,8 +19,8 @@ raw_env = [
 ]
 pidfile = None
 umask = 0
-user = 'ssm-user'
-group = 'ssm-user'
+user = 'ec2-user'
+group = 'ec2-user'
 tmp_upload_dir = None
 
 # Logging
