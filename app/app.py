@@ -1,4 +1,3 @@
-import cv2
 import os
 import boto3
 import botocore
@@ -8,9 +7,8 @@ from PIL import Image
 from werkzeug.utils import secure_filename
 from flask import Flask, request, send_file, make_response
 
-
-BUCKET_NAME = "bucket_name_xxxxxx"
-SERVER_NAME = "rembg server"
+AWS_REGION_NAME = "ap-east-1"
+BUCKET_NAME = "rembg-files"
 UPLOAD_FOLDER = "uploads"
 ALLOWED_EXTENSIONS = set(["png", "jpg", "jpeg", "webp"])
 
@@ -20,14 +18,14 @@ if UPLOAD_FOLDER not in os.listdir("."):
 
 class MyFlask(Flask):
     def process_response(self, response):
-        response.headers["Server"] = SERVER_NAME
+        # response.headers["Server"] = "Server"
+        # response.headers['Access-Control-Allow-Origin'] = 'https://yoursite.com'
         response.headers[
             "Strict-Transport-Security"
         ] = "max-age=3600; includeSubDomains; preload"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        # response.headers['Access-Control-Allow-Origin'] = 'https://yoursite.com'
         response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
         response.headers["Cross-Origin-Resource-Policy"] = "same-site"
         super(MyFlask, self).process_response(response)
@@ -40,7 +38,7 @@ app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16MB
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 app.secret_key = "secret key"
 
-s3 = boto3.client("s3")
+s3 = boto3.client("s3", region_name=AWS_REGION_NAME)
 
 
 def upload_s3(path, bucket_name, object_name):
@@ -91,15 +89,18 @@ def rembg():
         return make_response("Bad request", 400)
     if not file or not allowed_file(file.filename):
         return make_response("Bad file", 400)
+    datestamp = datetime.now().strftime("%Y%m%d")
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     input_filename = secure_filename(f"{timestamp}-{file.filename}")
     input_path = os.path.join(app.config["UPLOAD_FOLDER"], input_filename)
+    input_upload_path = f"{app.config['UPLOAD_FOLDER']}/{datestamp}/{input_filename}"
     file.save(input_path)
-    upload_s3(input_path, BUCKET_NAME, input_filename)
+    upload_s3(input_path, BUCKET_NAME, input_upload_path)
     output_filename = input_filename.split(".")[0] + ".rembg.png"
     output_path = os.path.join(app.config["UPLOAD_FOLDER"], output_filename)
+    output_upload_path = f"{app.config['UPLOAD_FOLDER']}/{datestamp}/{output_filename}"
     remove_background(input_path, output_path, mode)
-    upload_s3(output_path, BUCKET_NAME, output_filename)
+    upload_s3(output_path, BUCKET_NAME, output_upload_path)
     return send_file(output_path, download_name="rembg.png")
 
 

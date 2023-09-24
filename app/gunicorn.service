@@ -1,0 +1,20 @@
+# /etc/systemd/system/gunicorn.service
+[Unit]
+Description=Gunicorn daemon to serve app
+After=network.target
+
+[Service]
+Type=notify
+User=ssm-user
+Group=ssm-user
+RuntimeDirectory=gunicorn
+RuntimeDirectoryMode=0775
+WorkingDirectory=/home/ssm-user/app
+ExecStart=/home/ssm-user/app/venv/bin/gunicorn app:app
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
